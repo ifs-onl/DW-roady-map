@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IFS Loops · The agentic journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./assets/fonts.css" rel="stylesheet">
+<script src="./assets/d3.min.js"></script>
+<style>
+/* NEXUS BLACK design system */
+:root{
+  --page:#090909; --s1:#101011; --s2:#161618; --s3:#1d1d20;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14); --line-3:rgba(255,255,255,.22);
+  --tx:#F2F2F3; --tx-dim:#CFCFD6; --tx-faint:#9A9AA2;
+  --v1:#48157C; --v2:#8427E2; --v3:#A855F7; --teal:#2DD4BF; --blue:#0365D8;
+  --hi:#EF4444; --md:#F59E0B; --lo:#27B663; --ok:#0365D8;
+  --sans:'Inter Tight',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--page);color:var(--tx);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+#viewport{position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center}
+.slide{position:absolute;inset:0;width:1280px;height:720px;background:var(--page);opacity:0;visibility:hidden;
+  padding:64px 72px 56px;transition:opacity .5s ease;overflow:hidden;display:flex;flex-direction:column}
+.slide.active{opacity:1;visibility:visible;z-index:2}
+.logo{position:absolute;left:40px;top:40px;z-index:5;display:flex;align-items:center;gap:9px}
+.logo .mark{font-family:var(--sans);font-weight:700;font-size:19px;letter-spacing:-.5px;color:var(--tx);line-height:1}
+.logo .sub{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx-faint);padding-left:9px;border-left:1px solid var(--line-2)}
+#brand-logo{position:absolute;top:40px;right:40px;z-index:5;width:28px;height:28px;opacity:.55;pointer-events:none;user-select:none}
+.foot{position:absolute;left:72px;right:72px;bottom:26px;z-index:5;display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--tx-faint)}
+.foot .fr{display:flex;gap:20px}
+.foot .pg b{color:var(--tx-dim)}
+.aurora{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+.aurora .a1{width:620px;height:620px;background:#48157C;left:-160px;top:-220px}
+.aurora .a2{width:520px;height:520px;background:#1e3a8a;right:-160px;top:40px;opacity:.4}
+.aurora .a3{width:460px;height:460px;background:#0f766e;right:120px;bottom:-240px;opacity:.32}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:2.4px;text-transform:uppercase;color:var(--v3);display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:22px;height:1px;background:var(--v3);display:inline-block}
+.kicker.dim{color:var(--tx-faint)}
+.kicker.dim::before{background:var(--tx-faint)}
+h1.title{font-size:43px;font-weight:600;letter-spacing:-1px;line-height:1.1}
+h2.stitle{font-size:33px;font-weight:600;letter-spacing:-.6px;line-height:1.14}
+.lead{font-size:17px;font-weight:300;line-height:1.5;color:var(--tx-dim)}
+.accent{background:linear-gradient(110deg,var(--v3) 10%,var(--v2) 90%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-weight:600}
+.mono{font-family:var(--mono)}
+strong,b{font-weight:600}
+.card{background:rgba(16,16,17,.86);border:1px solid var(--line);border-radius:12px;padding:18px 20px;position:relative}
+.card .ct{font-size:14px;font-weight:600;letter-spacing:-.2px}
+.card .cd{font-size:12.5px;line-height:1.5;color:var(--tx-dim);font-weight:300}
+.card .cn{font-family:var(--mono);font-size:11px;color:var(--tx-faint);letter-spacing:.5px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:5px;border:1px solid var(--line-2);color:var(--tx-dim)}
+.diagram{position:relative;width:100%}
+.diagram svg{display:block;width:100%;height:100%;overflow:visible}
+.split .diagram{height:100%;min-height:0}
+.dg-tip{position:absolute;left:0;top:0;pointer-events:none;z-index:30;background:rgba(20,20,22,.97);border:1px solid var(--line-2);border-radius:9px;
+  padding:9px 12px;max-width:262px;opacity:0;transform:translateY(4px);transition:opacity .14s ease,transform .14s ease;box-shadow:0 18px 40px rgba(0,0,0,.6)}
+.dg-tip.on{opacity:1;transform:translateY(0)}
+.dg-tip .tt{font-size:12.5px;font-weight:600;margin-bottom:3px}
+.dg-tip .td{font-size:11px;line-height:1.5;color:var(--tx-dim);font-weight:300}
+.dg-tip .tk{font-family:var(--mono);font-size:9.5px;letter-spacing:.6px;color:var(--v3);text-transform:uppercase;margin-bottom:5px}
+.dg-hint{position:absolute;right:2px;top:-2px;font-family:var(--mono);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--tx-faint);display:flex;align-items:center;gap:6px}
+.dg-hint::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--v2);box-shadow:0 0 0 0 rgba(132,39,226,.6);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(132,39,226,.5)}70%{box-shadow:0 0 0 9px rgba(132,39,226,0)}100%{box-shadow:0 0 0 0 rgba(132,39,226,0)}}
+.n-node{cursor:pointer}
+.n-label{font-family:var(--sans);fill:var(--tx);font-weight:500}
+.n-mono{font-family:var(--mono);fill:var(--tx-faint)}
+.n-sub{font-family:var(--sans);fill:var(--tx-dim);font-weight:300}
+#progress{position:fixed;left:0;top:0;height:2px;background:linear-gradient(90deg,var(--v2),var(--v3));z-index:50;transition:width .4s ease}
+#nav{position:fixed;right:18px;bottom:14px;z-index:50;display:flex;gap:7px;align-items:center}
+.navbtn{width:30px;height:30px;border-radius:7px;border:1px solid var(--line-2);background:rgba(20,20,22,.8);color:var(--tx-dim);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s ease}
+.navbtn:hover{border-color:var(--line-3);color:var(--tx);background:var(--s2)}
+.navbtn svg{width:13px;height:13px}
+#cnt{font-family:var(--mono);font-size:11px;color:var(--tx-faint);letter-spacing:1px;padding:0 6px}
+#cnt b{color:var(--tx)}
+#notes{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(13,13,14,.985);border-top:1px solid var(--line-2);
+  transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);max-height:42vh;overflow-y:auto;backdrop-filter:blur(8px)}
+#notes.on{transform:translateY(0)}
+#notes .nhead{display:flex;justify-content:space-between;align-items:center;padding:11px 24px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(13,13,14,.99)}
+#notes .nhead .nt{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--v3)}
+#notes .nhead .nx{font-family:var(--mono);font-size:10px;color:var(--tx-faint)}
+#notes .nbody{padding:16px 24px 22px;font-size:13.5px;line-height:1.62;color:var(--tx-dim);font-weight:300;max-width:1000px}
+#notes .nbody h4{color:var(--tx);font-size:12px;font-family:var(--mono);text-transform:uppercase;letter-spacing:1.4px;margin:14px 0 6px;font-weight:500}
+#notes .nbody h4:first-child{margin-top:0}
+#notes .nbody p{margin-bottom:8px}
+#notes .nbody b{color:var(--tx)}
+.notes-data{display:none}
+#help{position:fixed;inset:0;z-index:80;background:rgba(7,7,7,.92);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#help.on{display:flex}
+#help .hc{background:var(--s1);border:1px solid var(--line-2);border-radius:14px;padding:32px 38px;max-width:440px}
+#help h3{font-size:18px;font-weight:600;margin-bottom:18px}
+#help .hr{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--tx-dim)}
+#help .hr:last-child{border:0}
+#help kbd{font-family:var(--mono);font-size:11px;background:var(--s3);border:1px solid var(--line-2);border-radius:5px;padding:3px 8px;color:var(--tx)}
+#hintbar{position:fixed;left:18px;bottom:16px;z-index:50;font-family:var(--mono);font-size:10px;letter-spacing:.6px;color:var(--tx-faint)}
+#hintbar kbd{background:var(--s2);border:1px solid var(--line);border-radius:4px;padding:2px 6px;color:var(--tx-dim)}
+.cover{display:flex;flex-direction:column;justify-content:center;height:100%;position:relative;z-index:2}
+.cover .ttl{font-size:62px;font-weight:600;letter-spacing:-2px;line-height:1.04;margin:22px 0 0}
+.cover .subttl{font-size:18px;font-weight:300;color:var(--tx-dim);margin-top:22px;max-width:680px;line-height:1.5}
+.cover .meta{display:flex;gap:34px;margin-top:40px}
+.cover .meta .mi .ml{font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--tx-faint)}
+.cover .meta .mi .mv{font-size:14px;font-weight:500;margin-top:5px}
+.divwrap{display:flex;flex-direction:column;justify-content:center;height:100%;position:relative;z-index:2}
+.divwrap .dnum{font-family:var(--mono);font-size:15px;color:var(--v3);letter-spacing:3px}
+.divwrap .dttl{font-size:54px;font-weight:600;letter-spacing:-1.6px;margin-top:14px;line-height:1.06}
+.divwrap .dlead{font-size:16px;font-weight:300;color:var(--tx-dim);margin-top:20px;max-width:640px;line-height:1.55}
+.divwrap .dpoints{display:flex;gap:14px;margin-top:34px}
+.divwrap .dp{font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;color:var(--tx-dim);border:1px solid var(--line-2);border-radius:8px;padding:9px 14px;background:rgba(16,16,17,.6)}
+.divwrap .dp b{color:var(--v3)}
+.head{margin-bottom:22px;position:relative;z-index:2}
+.head h2{margin-top:11px}
+.head .lead{margin-top:9px;max-width:920px}
+.grid{display:grid;gap:12px;position:relative;z-index:2}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+.split{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr);gap:26px;height:100%;position:relative;z-index:2}
+.split.wide-l{grid-template-columns:1.32fr 1fr}
+.split.wide-r{grid-template-columns:1fr 1.32fr}
+.vcenter{display:flex;flex-direction:column;justify-content:center}
+.fill{height:100%;display:flex;flex-direction:column}
+.flex1{flex:1;min-height:0}
+.stat{background:rgba(16,16,17,.86);border:1px solid var(--line);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.stat .sv{font-family:var(--mono);font-size:40px;font-weight:600;letter-spacing:-1px;line-height:1}
+.stat .sl{font-size:13px;font-weight:600;margin-top:10px}
+.stat .sd{font-size:11.5px;line-height:1.5;color:var(--tx-dim);font-weight:300;margin-top:5px}
+.stat .sbar{position:absolute;left:0;top:0;bottom:0;width:3px}
+.stat .ssrc{font-family:var(--mono);font-size:8.5px;letter-spacing:.8px;color:var(--tx-faint);margin-top:8px;text-transform:uppercase}
+.flist{display:flex;flex-direction:column;gap:10px}
+.fitem{display:flex;gap:13px;align-items:flex-start}
+.fitem .fi-ic{width:30px;height:30px;border-radius:8px;flex:none;border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;
+  background:var(--s2);font-family:var(--mono);font-size:12px;color:var(--v3);font-weight:600}
+.fitem .fi-t{font-size:13.5px;font-weight:600}
+.fitem .fi-d{font-size:12px;line-height:1.5;color:var(--tx-dim);font-weight:300;margin-top:2px}
+.recap-num{font-family:var(--mono);font-size:12px;color:var(--v3);width:30px;flex:none}
+.pill-list{display:flex;flex-wrap:wrap;gap:7px}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.kv:last-child{border:0}
+.kv .kk{color:var(--tx-dim);font-weight:300}
+.kv .vv{font-family:var(--mono);font-size:11.5px;color:var(--tx)}
+.callout{border-left:2px solid var(--v2);padding:11px 0 11px 16px;font-size:13px;line-height:1.55;color:var(--tx-dim);font-weight:300;position:relative;z-index:2}
+.callout b{color:var(--tx)}
+.fsteps{display:flex;gap:0;align-items:stretch;position:relative;z-index:2}
+.fstep{flex:1;background:rgba(16,16,17,.88);border:1px solid var(--line);border-radius:11px;padding:13px 14px;position:relative}
+.fstep .fs-n{font-family:var(--mono);font-size:9.5px;color:var(--v3);letter-spacing:1.2px}
+.fstep .fs-t{font-size:12.5px;font-weight:600;margin-top:6px;line-height:1.25}
+.fstep .fs-d{font-size:10.5px;line-height:1.45;color:var(--tx-dim);font-weight:300;margin-top:4px}
+.fa{align-self:center;font-family:var(--mono);color:var(--tx-faint);font-size:13px;padding:0 7px;flex:none}
+.dw-id{display:flex;align-items:center;gap:16px;position:relative;z-index:2}
+.dw-glyph{width:58px;height:58px;border-radius:15px;flex:none;background:linear-gradient(135deg,rgba(72,21,124,.55),rgba(132,39,226,.28));
+  border:1px solid rgba(168,85,247,.4);display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:17px;font-weight:600;color:#d8b4fe;letter-spacing:.5px}
+.dw-glyph.tealish{background:linear-gradient(135deg,rgba(13,90,82,.5),rgba(45,212,191,.16));border-color:rgba(45,212,191,.4);color:#7ee9dc}
+.dw-name{font-size:26px;font-weight:600;letter-spacing:-.5px;line-height:1.05}
+.dw-role{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--tx-faint);margin-top:5px}
+.qcard{background:rgba(16,16,17,.88);border:1px solid var(--line);border-radius:12px;padding:17px 19px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
+.qcard .qt{font-size:12.8px;line-height:1.52;color:var(--tx);font-weight:300}
+.qcard .qt b{color:var(--v3);font-weight:600}
+.qcard .qa{font-family:var(--mono);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--tx-faint);margin-top:auto}
+.qcard .qa b{color:var(--tx-dim)}
+.bignum{font-family:var(--mono);font-weight:600;letter-spacing:-2px;line-height:1;font-size:88px}
+.bignum small{font-size:42px;letter-spacing:-1px}
+.tline{display:flex;flex-direction:column;gap:12px;position:relative;z-index:2}
+.tl-i{display:flex;gap:16px;align-items:flex-start}
+.tl-i .tt{font-family:var(--mono);font-size:11px;color:var(--v3);letter-spacing:1px;flex:none;width:52px;padding-top:2px}
+.tl-i .tb{font-size:14.5px;font-weight:300;color:var(--tx-dim);line-height:1.5}
+.tl-i .tb b{color:var(--tx);font-weight:600}
+.cwrap{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+.split>div:first-child{display:flex;flex-direction:column;justify-content:center}
+.vcenter>.cd{background:rgba(13,13,14,.85);border:1px solid var(--line);border-radius:9px;padding:10px 13px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============ HOVER AFFORDANCES (deck-specific) ============ */
+.hov{transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.hov:hover{transform:translateY(-3px);border-color:rgba(168,85,247,.55);
+  background:rgba(24,18,32,.92);box-shadow:0 16px 36px rgba(0,0,0,.55)}
+.card.hov{overflow:visible}
+/* grids whose cards drop a reveal panel must paint above later siblings */
+.grid.revl{z-index:7}
+.reveal{position:absolute;left:-1px;right:-1px;top:100%;z-index:8;
+  background:rgba(21,16,28,.985);border:1px solid rgba(168,85,247,.42);border-top:none;
+  border-radius:0 0 12px 12px;padding:0 20px;max-height:0;opacity:0;overflow:hidden;
+  transition:max-height .26s ease,opacity .2s ease,padding .26s ease;
+  box-shadow:0 20px 38px rgba(0,0,0,.6)}
+.hov:hover .reveal{max-height:190px;opacity:1;padding:12px 20px 15px}
+.reveal .rk{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--v3);margin-bottom:8px}
+.reveal ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.reveal li{font-size:11.5px;line-height:1.4;color:var(--tx-dim);font-weight:300;padding-left:14px;position:relative}
+.reveal li::before{content:"\203A";position:absolute;left:0;color:var(--v3)}
+.stat.hov:hover .sbar{width:5px}
+.rmi{display:flex;gap:10px;align-items:flex-start;padding:5px 8px;border-radius:7px;
+  transition:background .16s ease,transform .16s ease}
+.rmi:hover{background:rgba(132,39,226,.14);transform:translateX(3px)}
+.rmi .rmk{font-family:var(--mono);font-size:8px;letter-spacing:.9px;text-transform:uppercase;flex:none;width:24px;padding-top:3px;color:var(--v3)}
+.rmi .rmt{font-size:11.5px;line-height:1.36;color:var(--tx-faint);font-weight:300}
+.rmi .rmt b{color:var(--tx-dim);font-weight:600;display:block}
+.qhead{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:9px;margin-bottom:6px;border-bottom:1px solid var(--line-2)}
+.qhead .qq{font-size:15px;font-weight:600;letter-spacing:-.2px}
+.qhead .qd{font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:var(--tx-faint)}
+.nowtag{font-family:var(--mono);font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;
+  padding:2px 7px;border-radius:4px;background:rgba(39,182,99,.16);border:1px solid rgba(39,182,99,.45);color:#6ee7a8}
+.mini{background:rgba(16,16,17,.86);border:1px solid var(--line);border-radius:11px;padding:13px 15px;position:relative}
+.mini .mt{font-size:12.5px;font-weight:600}
+.mini .md{font-size:11px;line-height:1.45;color:var(--tx-dim);font-weight:300;margin-top:5px}
+
+#hpicker{position:fixed;inset:0;z-index:80;background:rgba(7,7,7,.92);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#hpicker.on{display:flex}
+#hpicker .hc{background:var(--s1);border:1px solid var(--line-2);border-radius:14px;padding:30px 36px;min-width:380px;max-width:540px;max-height:70vh;overflow-y:auto}
+#hpicker h3{font-size:18px;font-weight:600;margin-bottom:16px}
+#hpicker #hlist{list-style:none;padding:0;margin:0}
+#hpicker #hlist li{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+#hpicker #hlist li:last-child{border-bottom:0}
+#hpicker #hlist li.empty{color:var(--tx-faint);font-style:italic;justify-content:center;padding:18px 0}
+#hpicker #hlist .hl-id{font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;color:var(--v3);min-width:34px}
+#hpicker #hlist .hl-lab{flex:1;color:var(--tx-dim);font-weight:300}
+#hpicker #hlist button{font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:6px 13px;border-radius:7px;
+  border:1px solid var(--line-2);background:var(--s2);color:var(--tx-dim);cursor:pointer;transition:all .16s ease}
+#hpicker #hlist button:hover{background:linear-gradient(120deg,var(--v1),var(--v2));border-color:transparent;color:#fff}
+#hpicker .hint{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--tx-faint);margin-top:16px;text-align:center}
+#hpicker .hint kbd{background:var(--s3);border:1px solid var(--line-2);border-radius:5px;padding:3px 8px;color:var(--tx);font-family:var(--mono);font-size:11px}
+#overview{position:fixed;inset:0;z-index:85;background:rgba(7,7,7,.96);backdrop-filter:blur(6px);display:none;flex-direction:column}
+#overview.on{display:flex}
+#overview .ov-head{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;border-bottom:1px solid var(--line);flex:none}
+#overview .ov-head .ov-title{display:flex;align-items:center;gap:14px}
+#overview .ov-head h3{font-size:16px;font-weight:600;letter-spacing:-.2px}
+#overview .ov-head .ov-meta{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--tx-faint)}
+#overview .ov-head .ov-meta b{color:var(--tx-dim)}
+#overview .ov-head .ov-close{font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:6px 13px;border-radius:7px;
+  border:1px solid var(--line-2);background:var(--s1);color:var(--tx-dim);cursor:pointer;transition:all .16s ease}
+#overview .ov-head .ov-close:hover{border-color:var(--line-3);color:var(--tx);background:var(--s2)}
+#overview .ov-body{flex:1;overflow-y:auto;padding:22px 28px 60px}
+#overview .ov-grid{display:grid;grid-template-columns:repeat(auto-fill,288px);gap:18px 18px;justify-content:center;max-width:1640px;margin:0 auto}
+#overview .ov-cell{position:relative;cursor:pointer;border:1px solid var(--line-2);border-radius:9px;background:var(--s1);overflow:hidden;
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+#overview .ov-cell:hover{border-color:var(--v3);transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+#overview .ov-cell.dragging{opacity:.4}
+#overview .ov-cell.drop-before::before,#overview .ov-cell.drop-after::after{content:"";position:absolute;top:6px;bottom:6px;width:3px;background:linear-gradient(180deg,var(--v3),var(--v2));border-radius:2px;z-index:6}
+#overview .ov-cell.drop-before::before{left:-11px}
+#overview .ov-cell.drop-after::after{right:-11px}
+#overview .ov-cell.current{border-color:var(--v3);box-shadow:0 0 0 2px var(--v2),0 10px 24px rgba(132,39,226,.25)}
+#overview .ov-thumb{position:relative;width:288px;height:162px;overflow:hidden;background:var(--page)}
+#overview .ov-thumb .slide{position:absolute;top:0!important;left:0!important;right:auto!important;bottom:auto!important;
+  width:1280px!important;height:720px!important;opacity:1!important;visibility:visible!important;
+  transform:scale(.225);transform-origin:top left;transition:none!important;pointer-events:none;background:var(--page)!important}
+#overview .ov-thumb .slide *{animation:none!important;transition:none!important}
+#overview .ov-cell.hidden-slide .ov-thumb{filter:grayscale(.7);opacity:.4}
+#overview .ov-cell.hidden-slide .ov-thumb::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(135deg,rgba(239,68,68,0) 0,rgba(239,68,68,0) 14px,rgba(239,68,68,.08) 14px,rgba(239,68,68,.08) 16px)}
+#overview .ov-cell .ov-badge{position:absolute;top:8px;right:8px;z-index:3;font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;
+  padding:3px 8px;border-radius:4px;font-weight:600;background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.45);color:#fca5a5}
+#overview .ov-cell .ov-current{position:absolute;top:8px;left:8px;z-index:3;font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;
+  padding:3px 8px;border-radius:4px;font-weight:600;background:rgba(132,39,226,.22);border:1px solid rgba(168,85,247,.5);color:#d8b4fe}
+#overview .ov-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line);
+  background:var(--s1);font-family:var(--mono);font-size:10px;letter-spacing:.6px}
+#overview .ov-foot .ov-num{color:var(--v3);min-width:22px}
+#overview .ov-foot .ov-lab{flex:1;text-transform:uppercase;letter-spacing:.8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx-dim)}
+#overview .ov-hint{position:fixed;left:0;right:0;bottom:0;z-index:1;text-align:center;padding:10px 0 14px;
+  background:linear-gradient(180deg,rgba(7,7,7,0),rgba(7,7,7,.95) 60%);font-family:var(--mono);font-size:10px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--tx-faint);pointer-events:none}
+#overview .ov-hint kbd{background:var(--s3);border:1px solid var(--line-2);border-radius:5px;padding:3px 8px;color:var(--tx)}
+#toast{position:fixed;left:50%;bottom:60px;transform:translateX(-50%);background:var(--s2);border:1px solid var(--line-2);border-radius:8px;
+  padding:10px 16px;color:var(--tx);font-size:12.5px;font-family:var(--mono);letter-spacing:.6px;z-index:90;opacity:0;transition:opacity .25s ease;
+  pointer-events:none;box-shadow:0 12px 32px rgba(0,0,0,.5);max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="viewport"><div id="stage">
+<img id="brand-logo" src="./assets/IFSLogo_white.png" alt="">
+
+<!-- ============ 01 · TITLE ============ -->
+<section class="slide active" id="s01" data-label="Title">
+  <div class="aurora"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+  <div class="cover">
+    <div class="kicker">IFS Loops &middot; Product journey FY26&ndash;27</div>
+    <h1 class="ttl">From one task, to the whole workflow,<br>to <span class="accent">no screen at all</span></h1>
+    <p class="subttl">Where IFS Loops actually is today, what lands next, and what we are not claiming yet.</p>
+    <div class="meta">
+      <div class="mi"><div class="ml">Presented by</div><div class="mv">Manie Cronje</div></div>
+      <div class="mi"><div class="ml">Session</div><div class="mv">30 minutes, questions as we go</div></div>
+      <div class="mi"><div class="ml">Horizon</div><div class="mv">FY26 &ndash; FY27</div></div>
+    </div>
+  </div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>01</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Open</h4>
+    <p>Do not start with the product. Start with them. "Before I show you anything, I want to describe your Tuesday morning back to you, and you tell me if I have it wrong."</p>
+    <h4>The thesis to land</h4>
+    <p>Automation moves in three steps. Single tasks first, then whole workflows, then no interface at all. Step one is live and in production today. Step three is honest discovery.</p>
+    <h4>Honesty point, set it up front</h4>
+    <p>Say early that you will tell them what is real, what is being built, and what is still an idea. That framing buys you credibility for the next twenty-nine minutes and it is the whole reason they will believe the roadmap slide later.</p>
+    <h4>Logistics</h4>
+    <p>Twelve slides. Two of them are interactive, so invite them to point at things. Interrupt whenever.</p>
+  </div>
+</section>
+
+<!-- ============ 02 · THE SITUATION ============ -->
+<section class="slide" id="s02" data-label="The situation">
+  <div class="head">
+    <div class="kicker">The situation</div>
+    <h2 class="stitle">Nobody here is short of systems</h2>
+    <p class="lead">You are short of hours. The work still gets done, it just costs a good person most of their day to do it.</p>
+  </div>
+  <div class="grid g3 revl" style="margin-top:6px">
+    <div class="card hov">
+      <div class="tag" style="color:var(--v3);border-color:var(--v3)">Planner</div>
+      <div class="ct" style="font-size:15px;margin-top:11px">Three screens, one question</div>
+      <div class="cd" style="margin-top:7px">Checks the asset, then the contract, then the roster, to answer whether one job can move to Thursday.</div>
+      <div class="reveal">
+        <div class="rk">What it costs</div>
+        <ul>
+          <li>The answer was already in the data, in three places</li>
+          <li>By the time it is found, the customer has rung again</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov">
+      <div class="tag" style="color:var(--v3);border-color:var(--v3)">Buyer</div>
+      <div class="ct" style="font-size:15px;margin-top:11px">Chasing a date by email</div>
+      <div class="cd" style="margin-top:7px">Third follow-up to the same supplier for a delivery date the purchase order already asked for.</div>
+      <div class="reveal">
+        <div class="rk">What it costs</div>
+        <ul>
+          <li>Nothing about the chase needs judgement</li>
+          <li>The part still lands late, and a van goes out twice</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov">
+      <div class="tag" style="color:var(--v3);border-color:var(--v3)">Service desk</div>
+      <div class="ct" style="font-size:15px;margin-top:11px">The ninth time this month</div>
+      <div class="cd" style="margin-top:7px">Same fault, same customer type, same fix. Typed out again from scratch because the last nine are not searchable.</div>
+      <div class="reveal">
+        <div class="rk">What it costs</div>
+        <ul>
+          <li>Your best diagnostician solved it once, in their head</li>
+          <li>That knowledge leaves the building when they retire</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:20px"><b>None of this is a skills problem.</b> It is a volume problem, and you cannot hire your way out of a volume problem. That is the gap we are aiming at.</div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>02</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Opening tell, this is the empathy slide</h4>
+    <p>Do not rush it. Pick whichever of the three is closest to their business and tell it as a story, not as a bullet. Ask "how far off am I?" and let them correct you. If they correct you, use their version for the rest of the session.</p>
+    <h4>Hover</h4>
+    <p>Each card opens on hover to show what the situation actually costs. Use one, not all three.</p>
+    <h4>Bridge</h4>
+    <p>"So the question is not whether you need more people. It is which of these should stop being a person's job at all."</p>
+  </div>
+</section>
+
+<!-- ============ 03 · THREE HORIZONS ============ -->
+<section class="slide" id="s03" data-label="Three horizons">
+  <div class="head">
+    <div class="kicker">The path</div>
+    <h2 class="stitle">Three steps, and we are <span class="accent">on the first one</span></h2>
+    <p class="lead">Each step automates a bigger piece of the business. Hover any of them to see what sits inside.</p>
+  </div>
+  <div class="grid g3 revl" style="margin-top:6px">
+    <div class="card hov" style="border-color:rgba(45,212,191,.28)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="tag" style="color:var(--teal);border-color:rgba(45,212,191,.5)">Horizon 1 &middot; Now</span>
+        <span class="nowtag">Released FY26</span>
+      </div>
+      <div class="ct" style="font-size:16px;margin-top:12px">Digital workers</div>
+      <div class="cd" style="margin-top:7px">One worker, one job, done properly. Routing a call, replenishing stock, chasing a supplier order, closing a job out.</div>
+      <div class="reveal">
+        <div class="rk">Live today, across four domains</div>
+        <ul>
+          <li>Customer experience &middot; Auto Pilot, Agent Assist, Auto QA</li>
+          <li>Field service &middot; routing, planning, dispatch, closure</li>
+          <li>Procurement &middot; replenishment, supplier orders, sourcing</li>
+          <li>Asset and parts &middot; material replenishment, closeout</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov" style="border-color:rgba(168,85,247,.28)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="tag" style="color:var(--v3);border-color:rgba(168,85,247,.5)">Horizon 2 &middot; FY26&ndash;27</span>
+        <span class="tag" style="color:var(--md);border-color:rgba(245,158,11,.45)">Building</span>
+      </div>
+      <div class="ct" style="font-size:16px;margin-top:12px">Agentic workflows</div>
+      <div class="cd" style="margin-top:7px">Several workers under one orchestrator, running a whole lifecycle. Intake, execution, closure, billing, with the handovers automated too.</div>
+      <div class="reveal">
+        <div class="rk">The first one, in build now</div>
+        <ul>
+          <li>Agentic FSM &middot; contact through to invoice, 13 workers</li>
+          <li>Agentic procurement &middot; 5 workers, available</li>
+          <li>Agentic EAM &middot; 4 workers, Q4 FY26</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov" style="border-color:rgba(245,158,11,.24)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="tag" style="color:var(--md);border-color:rgba(245,158,11,.45)">Horizon 3 &middot; FY27+</span>
+        <span class="tag">Discovery</span>
+      </div>
+      <div class="ct" style="font-size:16px;margin-top:12px">Headless applications</div>
+      <div class="cd" style="margin-top:7px">The process runs without a screen. No interface to log into, because the interface was only ever there to tell the software what to do.</div>
+      <div class="reveal">
+        <div class="rk">Where the honesty sits</div>
+        <ul>
+          <li>This is a direction, not a delivery date</li>
+          <li>Nothing here should shape a business case yet</li>
+          <li>We would rather you plan around Horizon 1 and 2</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:20px"><b>Be careful with Horizon 3.</b> Everyone in this market is selling it. If a vendor tells you their headless enterprise ships next quarter, ask them to show you one running. We are calling ours discovery because that is what it is.</div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>03</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Structure of the whole session, in one slide</h4>
+    <p>Everything after this hangs off these three boxes. Spend real time here.</p>
+    <h4>The move that earns trust</h4>
+    <p>Lead with Horizon 3 being discovery, before they ask. It costs you nothing, because nobody buys on Horizon 3 anyway, and it makes the "released FY26" claim on Horizon 1 land as fact rather than as marketing.</p>
+    <h4>Hover</h4>
+    <p>Open Horizon 1 to show breadth, open Horizon 2 to show the FSM workflow is real and in build. Skip Horizon 3's panel unless someone pushes.</p>
+    <h4>Bridge</h4>
+    <p>"So the unit of all of this is the digital worker. Let me show you what one actually is, because it is not what most people picture."</p>
+  </div>
+</section>
+
+<!-- ============ 04 · WHAT A DIGITAL WORKER IS ============ -->
+<section class="slide" id="s04" data-label="What a digital worker is">
+  <div class="head">
+    <div class="kicker">The building block</div>
+    <h2 class="stitle">A digital worker is <span class="accent">not a chatbot</span></h2>
+    <p class="lead">It is assembled from three parts, and you configure them rather than code them.</p>
+  </div>
+  <div class="grid g3 revl" style="margin-top:6px">
+    <div class="card hov">
+      <div class="cn" style="color:var(--teal)">80+ available</div>
+      <div class="ct" style="font-size:16px;margin-top:9px">Agentic skills</div>
+      <div class="cd" style="margin-top:7px">Reusable sub-agents. Each one does a single capability well and can be dropped into any worker that needs it.</div>
+      <div class="reveal">
+        <div class="rk">For example</div>
+        <ul>
+          <li>Split a purchase order</li>
+          <li>Resolve a job to the right knowledge article</li>
+          <li>Run a three-way invoice check</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov">
+      <div class="cn" style="color:var(--v3)">100+ pre-built &middot; 75+ connectors</div>
+      <div class="ct" style="font-size:16px;margin-top:9px">Tools</div>
+      <div class="cd" style="margin-top:7px">The actions. Each tool does one thing against a system of record, and carries its own permissions when it does it.</div>
+      <div class="reveal">
+        <div class="rk">For example</div>
+        <ul>
+          <li>Read an ERP record</li>
+          <li>Create a purchase order</li>
+          <li>Trigger an IFS workflow</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov">
+      <div class="cn" style="color:var(--md)">Semantic &middot; episodic &middot; procedural</div>
+      <div class="ct" style="font-size:16px;margin-top:9px">Context memory</div>
+      <div class="cd" style="margin-top:7px">Starts empty. Learns your suppliers, your exceptions, your documents. The knowledge compounds and it stays with you.</div>
+      <div class="reveal">
+        <div class="rk">What it remembers</div>
+        <ul>
+          <li>Your process documents</li>
+          <li>Every exception a human corrected</li>
+          <li>Supplier-specific behaviour and quirks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:20px"><b>The distinction that saves you money:</b> a tool is deterministic, cheap and easy to audit. A skill reasons, and reasoning costs tokens. A worker built well uses tools for the boring 90% and skills only where judgement is genuinely needed.</div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>04</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Headline</h4>
+    <p>Kill the chatbot picture in the first sentence. Most of the room walked in imagining a chat window bolted onto IFS.</p>
+    <h4>Hover</h4>
+    <p>Open Tools. The examples are concrete and boring on purpose, and boring is what makes it credible.</p>
+    <h4>The callout is the value statement</h4>
+    <p>Say it plainly. Anyone who has run an LLM pilot has been surprised by a token bill. Telling them how the architecture keeps it down, before they ask, is worth more than any capability claim on this slide.</p>
+    <h4>Bridge</h4>
+    <p>"Now, none of that is unique. Anyone can build skills and tools. The next slide is the part that is genuinely hard to copy."</p>
+  </div>
+</section>
+
+<!-- ============ 05 · INDUSTRIAL CONTEXT GRAPH (D3) ============ -->
+<section class="slide" id="s05" data-label="Industrial context graph">
+  <div class="head">
+    <div class="kicker">The layer underneath everything</div>
+    <h2 class="stitle">This is the part that is <span class="accent">hard to copy</span></h2>
+    <p class="lead">Generic AI reasons over documents. Loops reasons over your assets, contracts, crews, parts and orders, and the relationships between them.</p>
+  </div>
+  <div class="diagram flex1" id="dg-graph" style="margin-top:0">
+    <div class="dg-hint">Hover a domain</div>
+  </div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>05</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Drive the diagram, do not read it</h4>
+    <p>Hover two domains, no more. Field service and procurement are the pair that make the point fastest.</p>
+    <h4>The line that lands it</h4>
+    <p>"A sensor reading on a critical asset, owned by a cost centre, covered by an SLA, means something completely different to the same reading on a spare sitting in a depot. A model reading documents cannot tell those apart. This can, because the relationship is in the data model, not in the prompt."</p>
+    <h4>Why this slide matters commercially</h4>
+    <p>Four claims collapse without this layer. Industrial, because it is an asset ontology and not embeddings. Enterprise-grade, because permissions and audit attach to the edges. Headless, because the state of the work lives here and not in a form somebody is halfway through. Agentic, because planning is walking the graph.</p>
+    <h4>Honesty point</h4>
+    <p>The graph needs their data mapped to it. That is the real setup work in a pilot, and it is worth saying so here rather than letting it surface in week three.</p>
+  </div>
+</section>
+
+<!-- ============ 06 · WHY IT IS DIFFERENT ============ -->
+<section class="slide" id="s06" data-label="Why it is different">
+  <div class="head">
+    <div class="kicker">Under the bonnet</div>
+    <h2 class="stitle">Not an LLM bolted onto a workflow</h2>
+    <p class="lead">Three design decisions, all aimed at the same thing. The same input should give you the same answer twice.</p>
+  </div>
+  <div class="grid g3 revl" style="margin-top:6px">
+    <div class="card hov">
+      <div class="cn" style="color:var(--v3)">Fine-tuned 8&ndash;13B model</div>
+      <div class="ct" style="font-size:16px;margin-top:9px">Planning orchestrator</div>
+      <div class="cd" style="margin-top:7px">A domain-trained model decides the sequence of steps. Planning has to be correct, not merely plausible.</div>
+      <div class="reveal">
+        <div class="rk">Why it is separate</div>
+        <ul>
+          <li>Variability in planning is a defect, not creativity</li>
+          <li>Domain training beats general fluency for this job</li>
+          <li>Single-model agents blur the two and drift</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov">
+      <div class="cn" style="color:var(--teal)">Episodic &middot; semantic &middot; procedural</div>
+      <div class="ct" style="font-size:16px;margin-top:9px">Three-layer memory</div>
+      <div class="cd" style="margin-top:7px">Persistent and queryable, held in your tenant. Not trapped inside one model's context window.</div>
+      <div class="reveal">
+        <div class="rk">What that gives you</div>
+        <ul>
+          <li>Knowledge compounds instead of resetting</li>
+          <li>It is yours, and it does not leave with an employee</li>
+          <li>When an expert overrides a decision, the why is kept</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov">
+      <div class="cn" style="color:var(--md)">Recognition over reasoning</div>
+      <div class="ct" style="font-size:16px;margin-top:9px">Determinism</div>
+      <div class="cd" style="margin-top:7px">Known patterns get recognised and instantiated, rather than reasoned out from first principles on every run.</div>
+      <div class="reveal">
+        <div class="rk">Why you care</div>
+        <ul>
+          <li>Repeatable outcomes your auditors can follow</li>
+          <li>Far cheaper per run than re-reasoning every time</li>
+          <li>New patterns still get reasoned, then learned</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:20px"><b>The big general models still do plenty.</b> They read the voice note, the photo and the PDF, and they write the reply a customer actually wants to receive. They just do not do the planning, because that is where being confidently wrong costs you money.</div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>06</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>This slide answers the question they have not asked yet</h4>
+    <p>"How is this different from us wiring ChatGPT into our ERP?" Somebody in the room is thinking it. Answer it before they say it out loud.</p>
+    <h4>Keep it to one idea</h4>
+    <p>Division of labour. One model that plans and must be right, one that generates and must be fluent. Everything on the slide is that idea in three forms.</p>
+    <h4>Honesty point</h4>
+    <p>Determinism is not absolute. It is a pattern library that covers the repeatable work and reasons through the rest. Say that. Overclaiming determinism is the fastest way to lose a technical audience.</p>
+    <h4>Bridge</h4>
+    <p>"Enough architecture. Here is one real job moving through it."</p>
+  </div>
+</section>
+
+<!-- ============ 07 · AGENTIC FSM FLOW (D3) ============ -->
+<section class="slide" id="s07" data-label="One job, end to end">
+  <div class="head">
+    <div class="kicker">One job, end to end</div>
+    <h2 class="stitle">Nine workers, <span class="accent">one handover chain</span></h2>
+    <p class="lead">A customer rings with a fault. Nobody re-keys anything between here and the invoice. Hover any worker to see what it owns.</p>
+  </div>
+  <div class="diagram flex1" id="dg-flow" style="margin-top:0">
+    <div class="dg-hint">Hover a worker</div>
+  </div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>07</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Tell it as one job, not as nine products</h4>
+    <p>"A pump goes down at six in the morning." Then walk left to right in one breath. Contact, triage, plan, parts, dispatch, close. The audience should feel the absence of the handovers.</p>
+    <h4>The moment to slow down</h4>
+    <p>The parts lane. Nobody asked for that requisition. The planning worker enriched the job, and the replenishment worker acted on it. That is the difference between nine tools and one workflow.</p>
+    <h4>Impact, stated plainly</h4>
+    <p>The value is not any single worker. It is that the context created at the first contact is still attached at the invoice. Put a number on it from their world if you have one, otherwise ask them what a repeat visit costs and use their figure.</p>
+    <h4>Honesty point</h4>
+    <p>This is Horizon 2. The individual workers are live, the full orchestrated chain is in build through FY26 and FY27. Do not let the diagram imply otherwise.</p>
+  </div>
+</section>
+
+<!-- ============ 08 · ROADMAP ============ -->
+<section class="slide" id="s08" data-label="Roadmap FY26-27">
+  <div class="head">
+    <div class="kicker">Delivery plan</div>
+    <h2 class="stitle">What lands, and when</h2>
+    <p class="lead">Three quarters. The first one is real and dated. After that it is direction, and I will say so rather than let you plan around it.</p>
+  </div>
+  <div class="grid g3" style="margin-top:4px">
+    <div class="card hov" style="border-color:rgba(39,182,99,.3);padding:16px 14px">
+      <div class="qhead">
+        <div><div class="qq">Q3 FY26</div><div class="qd">15 Sep 2026</div></div>
+        <span class="nowtag">Current</span>
+      </div>
+      <div class="rmi"><span class="rmk">DW</span><span class="rmt"><b>Nine workers into early adoption</b>Job analyst, agent assist, sourcing, reconciliation, warranty claims, time entry, closeout</span></div>
+      <div class="rmi"><span class="rmk">PF</span><span class="rmt"><b>Headless generative UI</b>Worker surfaces without building a screen</span></div>
+      <div class="rmi"><span class="rmk">PF</span><span class="rmt"><b>Skills to 200+</b>And governance, policy and audit expansion</span></div>
+      <div class="rmi"><span class="rmk">CN</span><span class="rmt"><b>Dynamics 365, MS Agent 365</b>Plus IFS service request and Apps 10</span></div>
+    </div>
+    <div class="card hov" style="padding:16px 14px">
+      <div class="qhead">
+        <div><div class="qq">Q4 FY26</div><div class="qd">15 Jan 2027</div></div>
+        <span class="tag">Indicative</span>
+      </div>
+      <div class="rmi"><span class="rmk">PF</span><span class="rmt"><b>Build your own workers</b>Your team builds them, not just ours</span></div>
+      <div class="rmi"><span class="rmk">PF</span><span class="rmt"><b>Headless applications</b>The full app layer, plus an ontology builder</span></div>
+      <div class="rmi"><span class="rmk">DW</span><span class="rmt"><b>AP invoicing, asset onboarding</b>And asset intelligence across FSM and EAM</span></div>
+      <div class="rmi"><span class="rmk">CN</span><span class="rmt"><b>SAP, Salesforce FSM</b>Nexus Cloud dedicated infrastructure</span></div>
+    </div>
+    <div class="card hov" style="padding:16px 14px">
+      <div class="qhead">
+        <div><div class="qq">Q1 FY27</div><div class="qd">15 Apr 2027</div></div>
+        <span class="tag">Indicative</span>
+      </div>
+      <div class="rmi"><span class="rmk">DW</span><span class="rmt"><b>Autonomous dispatch and replenishment</b>Scheduling and restocking with no human in the loop</span></div>
+      <div class="rmi"><span class="rmk">DW</span><span class="rmt"><b>Predictive service</b>Failure prediction, capital investment advice</span></div>
+      <div class="rmi"><span class="rmk">PF</span><span class="rmt"><b>Voice</b>Inbound, in-app and outbound calling</span></div>
+      <div class="rmi"><span class="rmk">CN</span><span class="rmt"><b>Snowflake, Databricks, Maximo</b>Data cloud and lakehouse pipelines</span></div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:18px"><b>Two caveats, and they matter.</b> Q4 and beyond is indicative scope, not a commitment. And roadmap timing is not the same thing as version support, so check your IFS release against the support matrix before you plan a single line of this.</div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>08</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>How to present a roadmap without losing the room</h4>
+    <p>Say the caveat before you walk the columns, not after. If you walk all three quarters and then admit two of them are soft, it reads as a retraction. If you say it first, the whole slide reads as candour.</p>
+    <h4>Hover</h4>
+    <p>Rows highlight on hover. Use it to pull out the one or two items relevant to them, and leave the rest alone. Nobody wants all twelve read out.</p>
+    <h4>The version-support point</h4>
+    <p>This is the one that causes real damage if it is skipped. Worker availability varies across IFS Cloud 24R1 to 26R1, Apps 10, PSO and Assyst. Promise to confirm their release in writing before anything is scoped.</p>
+    <h4>Bridge</h4>
+    <p>"That is the plan. Here is what is already running."</p>
+  </div>
+</section>
+
+<!-- ============ 09 · PROOF ============ -->
+<section class="slide" id="s09" data-label="Proof in production">
+  <div class="head">
+    <div class="kicker">In production today</div>
+    <h2 class="stitle">Five customers, <span class="accent">the same pattern</span></h2>
+    <p class="lead">Different industries, different starting problems. Every one of them started small.</p>
+  </div>
+  <div class="grid g5" style="margin-top:6px">
+    <div class="stat hov">
+      <div class="sbar" style="background:var(--teal)"></div>
+      <div class="sv" style="font-size:34px">100+</div>
+      <div class="sl">KLN Family Brands</div>
+      <div class="sd">Customer purchase orders processed every day</div>
+      <div class="ssrc">Manufacturing</div>
+    </div>
+    <div class="stat hov">
+      <div class="sbar" style="background:var(--v3)"></div>
+      <div class="sv" style="font-size:34px">20+</div>
+      <div class="sl">Ependion</div>
+      <div class="sd">Hours given back every week</div>
+      <div class="ssrc">Manufacturing</div>
+    </div>
+    <div class="stat hov">
+      <div class="sbar" style="background:var(--blue)"></div>
+      <div class="sv" style="font-size:34px">40%</div>
+      <div class="sl">Kitron</div>
+      <div class="sd">Faster replenishment cycle</div>
+      <div class="ssrc">Manufacturing</div>
+    </div>
+    <div class="stat hov">
+      <div class="sbar" style="background:var(--lo)"></div>
+      <div class="sv" style="font-size:34px">&euro;3M</div>
+      <div class="sl">Kodiak Gas Services</div>
+      <div class="sd">Saved annually on material replenishment</div>
+      <div class="ssrc">Energy</div>
+    </div>
+    <div class="stat hov">
+      <div class="sbar" style="background:var(--md)"></div>
+      <div class="sv" style="font-size:34px">100%</div>
+      <div class="sl">CDF Mindful Packaging</div>
+      <div class="sd">Purchase order coverage, no exceptions</div>
+      <div class="ssrc">Manufacturing</div>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="mini hov"><div class="mt">Every one started with a single worker</div><div class="md">One process, one worker, one measurable number. None of them started with a platform programme, and none of them needed one to get value in the first quarter.</div></div>
+    <div class="mini hov"><div class="mt">The workers repeat across customers</div><div class="md">Supplier order manager, customer order manager and inventory replenisher show up in four of the five. The same worker, learning a different business.</div></div>
+  </div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>09</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Do not read the tiles</h4>
+    <p>Pick the one closest to their industry and tell that story properly. The other four are there so they can see it is not a single lucky reference.</p>
+    <h4>The line that does the work</h4>
+    <p>"Every one of these started with one worker on one process. Not one of them started with a platform programme." That is the whole argument against the eighteen-month transformation they are probably bracing for.</p>
+    <h4>Honesty point</h4>
+    <p>If asked how long any of these took to get live, do not guess. Offer to get the real timeline from the account team and follow up in writing. A made-up number here undoes everything the last eight slides bought you.</p>
+  </div>
+</section>
+
+<!-- ============ 10 · TRUST AND DEPLOYMENT ============ -->
+<section class="slide" id="s10" data-label="Trust and deployment">
+  <div class="head">
+    <div class="kicker">Security and deployment</div>
+    <h2 class="stitle">Adopting Loops <span class="accent">does not change how you run IFS</span></h2>
+    <p class="lead">Managed SaaS on AWS, independently audited, connecting to whatever you already have.</p>
+  </div>
+  <div class="grid g3 revl" style="margin-top:4px">
+    <div class="card hov" style="padding:15px 17px">
+      <div class="cn" style="color:var(--lo)">AICPA trust services criteria</div>
+      <div class="ct" style="font-size:15px;margin-top:8px">SOC 2 Type II</div>
+      <div class="cd" style="margin-top:6px">Controls validated over a sustained period by an independent CPA firm, not a point-in-time snapshot.</div>
+      <div class="reveal">
+        <div class="rk">What you get</div>
+        <ul>
+          <li>The report, through the trust centre, on request</li>
+          <li>Controls monitored continuously in Drata</li>
+          <li>Annual third-party penetration tests, tracked to closure</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov" style="padding:15px 17px">
+      <div class="cn" style="color:var(--v3)">Article 28 &middot; DPA available</div>
+      <div class="ct" style="font-size:15px;margin-top:8px">GDPR and residency</div>
+      <div class="cd" style="margin-top:6px">EU data stays on EU-region infrastructure. Cross-border transfers governed by standard contractual clauses.</div>
+      <div class="reveal">
+        <div class="rk">What you get</div>
+        <ul>
+          <li>US and EU regions live today</li>
+          <li>DPAs on every enterprise contract</li>
+          <li>Retention limits and subject rights handled</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card hov" style="padding:15px 17px">
+      <div class="cn" style="color:var(--teal)">AES-256 &middot; TLS 1.2+</div>
+      <div class="ct" style="font-size:15px;margin-top:8px">Access and encryption</div>
+      <div class="cd" style="margin-top:6px">Role-based access with mandatory MFA and least privilege. Encrypted at rest and in transit.</div>
+      <div class="reveal">
+        <div class="rk">What you get</div>
+        <ul>
+          <li>Kubernetes platform, multi-region isolation</li>
+          <li>Production, staging and dev fully segregated</li>
+          <li>Daily encrypted backups, automatic failover</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:16px"><span class="kicker dim">It connects to any IFS environment</span></div>
+  <div class="grid g3" style="margin-top:10px">
+    <div class="mini hov"><div class="mt">IFS Cloud</div><div class="md">IFS-hosted endpoint, direct managed connection. Usually three environments, dev, test and production.</div></div>
+    <div class="mini hov"><div class="mt">Private or customer cloud</div><div class="md">Your AWS, Azure or GCP. Reverse proxy preferred, site-to-site VPN as the alternative.</div></div>
+    <div class="mini hov"><div class="mt">On-premise</div><div class="md">Your data centre, nothing publicly exposed. Site-to-site VPN, set up jointly with your network team.</div></div>
+  </div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>10</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Who this slide is for</h4>
+    <p>Usually one person in the room, and they have been waiting for it since slide one. Find them early and present this section to them directly.</p>
+    <h4>The headline is the whole point</h4>
+    <p>Adopting Loops does not change where or how they run IFS. That removes the biggest unspoken objection, which is that this is a migration in disguise.</p>
+    <h4>Honesty point</h4>
+    <p>The connectivity work is real and it is theirs. IP whitelisting or a reverse proxy is configured by their network team, and a site-to-site VPN is a joint build. Say that here rather than discovering it in week two of a pilot.</p>
+    <h4>Bridge</h4>
+    <p>"Which brings us to the only sensible way to find out whether any of this works on your data."</p>
+  </div>
+</section>
+
+<!-- ============ 11 · EARLY ADOPTER PROGRAM ============ -->
+<section class="slide" id="s11" data-label="Prove it first">
+  <div class="head">
+    <div class="kicker">How to start</div>
+    <h2 class="stitle">Prove it on your data <span class="accent">before you commit</span></h2>
+    <p class="lead">Eight to twelve weeks, sandbox first, and at least three rounds of iteration before a worker is ever tagged generally available.</p>
+  </div>
+  <div class="fsteps" style="margin-top:4px">
+    <div class="fstep hov"><div class="fs-n">PHASE 01</div><div class="fs-t">Scope</div><div class="fs-d">Success criteria and the ROI model, built with you, not handed to you.</div></div>
+    <div class="fa">&rarr;</div>
+    <div class="fstep hov"><div class="fs-n">PHASE 02</div><div class="fs-t">Configure</div><div class="fs-d">Stand the worker up against sandbox data. No production exposure.</div></div>
+    <div class="fa">&rarr;</div>
+    <div class="fstep hov"><div class="fs-n">PHASE 03</div><div class="fs-t">Iterate</div><div class="fs-d">Fortnightly cadence, direct line to product and engineering.</div></div>
+    <div class="fa">&rarr;</div>
+    <div class="fstep hov"><div class="fs-n">PHASE 04</div><div class="fs-t">Validate</div><div class="fs-d">Prove the outcome on real data, against the criteria you set in phase one.</div></div>
+    <div class="fa">&rarr;</div>
+    <div class="fstep hov"><div class="fs-n">PHASE 05</div><div class="fs-t">Convert</div><div class="fs-d">Preferred commercial terms if it works. No obligation if it does not.</div></div>
+  </div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card hov" style="padding:15px 17px">
+      <div class="ct" style="font-size:15px">What you get</div>
+      <div class="cd" style="margin-top:7px">Early access before general availability, real influence on the roadmap, a seat on the design council, and preferred terms at GA.</div>
+    </div>
+    <div class="card hov" style="padding:15px 17px">
+      <div class="ct" style="font-size:15px">Who it fits</div>
+      <div class="cd" style="margin-top:7px">An IFS Cloud customer with executive sponsorship, one pain point you can put a number and a deadline against, and an appetite to go first.</div>
+    </div>
+    <div class="card hov" style="padding:15px 17px">
+      <div class="ct" style="font-size:15px">What we need from you</div>
+      <div class="cd" style="margin-top:7px">A sandbox with realistic data, and one person who genuinely knows the process and can answer questions inside a day.</div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:18px"><b>This is real work on your side.</b> If you cannot give us a sandbox with realistic data and someone who owns the process, the pilot will flatter us and teach you nothing. I would rather wait a quarter and do it properly.</div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>11</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Do not sell this slide</h4>
+    <p>It sells itself if you describe it accurately. Time-boxed, sandbox-first, no production risk, and they can walk at the end.</p>
+    <h4>The callout is deliberate</h4>
+    <p>Turning away a badly resourced pilot is the most persuasive thing you will say all session. Anyone who has been through a vendor pilot that quietly failed will recognise the honesty immediately.</p>
+    <h4>Nine workers are in the current programme</h4>
+    <p>Available mid-September 2026. Reconciliation manager, sourcing manager, job analyst, auto QA, agent assist, job rate manager, warranty claims manager, time entry manager, closeout and improvement manager. Only name the ones relevant to them.</p>
+  </div>
+</section>
+
+<!-- ============ 12 · CLOSE ============ -->
+<section class="slide" id="s12" data-label="Where this leaves you">
+  <div class="head">
+    <div class="kicker dim">Where this leaves you</div>
+    <h2 class="stitle">Start with one process <span class="accent">you already hate</span></h2>
+  </div>
+  <div style="margin-top:10px;display:flex;flex-direction:column;gap:14px">
+    <div class="fitem" style="align-items:center"><span class="recap-num">01</span><div><div class="fi-t" style="font-size:15px">The workers are live now, not next year</div><div class="fi-d" style="font-size:12.5px">Five customers in production, across manufacturing and energy, with numbers you can check.</div></div></div>
+    <div class="fitem" style="align-items:center"><span class="recap-num">02</span><div><div class="fi-t" style="font-size:15px">The context graph is why it holds up on your data</div><div class="fi-d" style="font-size:12.5px">Assets, contracts, crews, parts and orders in one model. That is the layer generic AI does not have.</div></div></div>
+    <div class="fitem" style="align-items:center"><span class="recap-num">03</span><div><div class="fi-t" style="font-size:15px">Horizon 2 is being built, Horizon 3 is discovery</div><div class="fi-d" style="font-size:12.5px">Plan around what is dated. Q4 FY26 onwards is direction, and version support is a separate conversation.</div></div></div>
+    <div class="fitem" style="align-items:center"><span class="recap-num">04</span><div><div class="fi-t" style="font-size:15px">The pilot settles it on your numbers</div><div class="fi-d" style="font-size:12.5px">Eight to twelve weeks in a sandbox. If it does not hit the criteria you set, you walk and it has cost you a quarter of one person.</div></div></div>
+  </div>
+  <div class="callout" style="margin-top:24px"><b>The only thing I need from you today:</b> pick the one process where the volume is beating your people. Not the most strategic one, the most annoying one. We will scope that with you and put a number against it before anyone signs anything.</div>
+  <div class="logo"><span class="mark">IFS</span><span class="sub">Loops journey</span></div>
+  <div class="foot"><span class="pg"><b>12</b> / 12</span></div>
+  <div class="notes-data">
+    <h4>Close on them, not on the product</h4>
+    <p>Four points, no new material. Then stop talking and ask the question in the callout out loud. The silence after it is the most useful ten seconds of the session.</p>
+    <h4>Why "the most annoying one" rather than "the most strategic one"</h4>
+    <p>Strategic processes have committees attached. Annoying processes have one frustrated owner who will give you their afternoon. That owner is how a pilot actually finishes.</p>
+    <h4>Follow-up you owe them</h4>
+    <p>Their IFS release checked against the support matrix, and the real go-live timeline for whichever customer reference they cared about. Write both down before you leave the room.</p>
+  </div>
+</section>
+
+<!-- SLIDES_INSERT -->
+</div></div>
+
+<div id="hintbar"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> navigate &nbsp;&middot;&nbsp; <kbd>N</kbd> notes &nbsp;&middot;&nbsp; <kbd>?</kbd> help</div>
+<div id="nav">
+  <button class="navbtn" id="bPrev" title="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"></path></svg></button>
+  <span id="cnt"><b>01</b> / 12</span>
+  <button class="navbtn" id="bNext" title="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"></path></svg></button>
+  <button class="navbtn" id="bNotes" title="Speaker notes (N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"></path></svg></button>
+</div>
+
+<div id="notes">
+  <div class="nhead"><span class="nt">Speaker notes</span><span class="nx" id="nxLabel">Title  ·  01/12</span></div>
+  <div class="nbody" id="nBody"></div>
+</div>
+
+<div id="help">
+  <div class="hc">
+    <h3>Presenter controls</h3>
+    <div class="hr"><span>Next / previous slide</span><span><kbd>&rarr;</kbd> <kbd>&larr;</kbd> / <kbd>Space</kbd></span></div>
+    <div class="hr"><span>Jump to first / last</span><span><kbd>Home</kbd> <kbd>End</kbd></span></div>
+    <div class="hr"><span>Toggle speaker notes</span><span><kbd>N</kbd></span></div>
+    <div class="hr"><span>Detach notes to separate window</span><span><kbd>Shift</kbd> + <kbd>N</kbd></span></div>
+    <div class="hr"><span>Overview grid</span><span><kbd>O</kbd></span></div>
+    <div class="hr"><span>Reorder slides (persists)</span><span>drag cells in overview</span></div>
+    <div class="hr"><span>Reset slide order</span><span><kbd>R</kbd> in overview</span></div>
+    <div class="hr"><span>Hide current slide</span><span><kbd>H</kbd></span></div>
+    <div class="hr"><span>Hide / unhide hovered slide</span><span><kbd>H</kbd> in overview</span></div>
+    <div class="hr"><span>Open hidden-slides picker</span><span><kbd>Shift</kbd> + <kbd>H</kbd></span></div>
+    <div class="hr"><span>Restore all hidden slides</span><span><kbd>U</kbd></span></div>
+    <div class="hr"><span>Fullscreen</span><span><kbd>F</kbd></span></div>
+    <div class="hr"><span>Close this panel</span><span><kbd>Esc</kbd></span></div>
+  </div>
+</div>
+
+<div id="hpicker">
+  <div class="hc">
+    <h3>Hidden slides</h3>
+    <ul id="hlist"><li class="empty">No slides hidden.</li></ul>
+    <p class="hint"><kbd>U</kbd> restore all &nbsp;&middot;&nbsp; <kbd>Esc</kbd> close</p>
+  </div>
+</div>
+
+<div id="overview">
+  <div class="ov-head">
+    <div class="ov-title">
+      <h3>Slide overview</h3>
+      <span class="ov-meta" id="ovMeta">12 slides &nbsp;·&nbsp; 0 hidden</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="ov-close no-nav" id="ovReset" title="Restore the original slide order">Reset order</button>
+      <button class="ov-close no-nav" id="ovClose">Close</button>
+    </div>
+  </div>
+  <div class="ov-body">
+    <div class="ov-grid" id="ovGrid"></div>
+  </div>
+  <div class="ov-hint"><kbd>O</kbd> toggle &nbsp;&middot;&nbsp; <kbd>Esc</kbd> close &nbsp;&middot;&nbsp; click to jump &nbsp;&middot;&nbsp; drag to reorder &nbsp;&middot;&nbsp; hover + <kbd>H</kbd> hide/unhide &nbsp;&middot;&nbsp; <kbd>R</kbd> reset order</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   DECK FRAMEWORK
+   ============================================================ */
+const slides=[...document.querySelectorAll('.slide')];
+const STORE='ifs-loops-agentic-journey';
+const TOTAL=slides.length;
+let cur=0;
+/* ---------- slide order (persisted, drag-to-reorder in overview) ---------- */
+const byId={};slides.forEach(s=>{byId[s.id]=s;});
+const ORDER_KEY=STORE+'-order';
+let order=slides.map(s=>s.id);
+try{
+  const saved=JSON.parse(localStorage.getItem(ORDER_KEY)||'null');
+  if(Array.isArray(saved)){
+    const valid=saved.filter(id=>byId[id]);
+    slides.forEach((s,di)=>{if(valid.indexOf(s.id)<0)valid.splice(Math.min(di,valid.length),0,s.id);});
+    if(valid.length===slides.length)order=valid;
+  }
+}catch(_){}
+function saveOrder(){try{localStorage.setItem(ORDER_KEY,JSON.stringify(order));}catch(_){}}
+function seq(){return order.map(id=>byId[id]);}
+function isCustomOrder(){return order.some((id,i)=>slides[i].id!==id);}
+const stage=document.getElementById('stage');
+const initOnce={};
+
+let hidden=new Set();
+try{hidden=new Set(JSON.parse(localStorage.getItem(STORE+'-hidden')||'[]'));}catch(_){}
+function saveHidden(){try{localStorage.setItem(STORE+'-hidden',JSON.stringify([...hidden]));}catch(_){}}
+function visList(){return seq().filter(s=>!hidden.has(s.id));}
+function renumberFooters(){
+  const v=visList(),t=String(v.length).padStart(2,'0');
+  slides.forEach(s=>{
+    const pg=s.querySelector('.foot .pg');if(!pg)return;
+    const i=v.indexOf(s);if(i<0)return;
+    pg.innerHTML='<b>'+String(i+1).padStart(2,'0')+'</b> / '+t;
+  });
+}
+function firstVisible(){const v=visList();return v.length?slides.indexOf(v[0]):cur;}
+function lastVisible(){const v=visList();return v.length?slides.indexOf(v[v.length-1]):cur;}
+
+function fit(){
+  const s=Math.min(window.innerWidth/1280,window.innerHeight/720);
+  stage.style.transform='translate(-50%,-50%) scale('+s+')';
+}
+window.addEventListener('resize',fit);fit();
+
+function setCnt(){
+  const v=visList(),vt=v.length,vp=v.indexOf(slides[cur])+1;
+  const lbl=vp>0?String(vp).padStart(2,'0'):'––';
+  const pct=vp>0?(vp/vt*100):0;
+  document.getElementById('cnt').innerHTML='<b>'+lbl+'</b> / '+String(vt).padStart(2,'0');
+  document.getElementById('progress').style.width=pct+'%';
+}
+function renderNotes(){
+  const sl=slides[cur];
+  const nd=sl.querySelector('.notes-data');
+  const kick=sl.getAttribute('data-label')||('Slide '+(cur+1));
+  const v=visList(),vt=v.length,vp=v.indexOf(sl)+1;
+  const pos=vp>0?String(vp).padStart(2,'0')+'/'+String(vt).padStart(2,'0'):'hidden';
+  document.getElementById('nxLabel').textContent=kick+'  ·  '+pos;
+  document.getElementById('nBody').innerHTML=nd?nd.innerHTML:'<p>—</p>';
+  updateNotesWin();
+}
+/* ---------- detached presenter-notes window (Shift+N) ---------- */
+let notesWin=null,notesTimerT=null,notesT0=null;
+function openNotesWin(){
+  notesWin=window.open('','deck-notes','width=760,height=620');
+  if(!notesWin){toast('Pop-up blocked — allow pop-ups for this file');return;}
+  const d=notesWin.document;
+  d.open();
+  d.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Presenter notes</title>'
+   +'<link rel="stylesheet" href="'+new URL('assets/fonts.css',location.href).href+'">'
+   +'<style>'
+   +'*{box-sizing:border-box}'
+   +'body{background:#0d0d0e;color:#F2F2F3;font-family:\'Inter Tight\',-apple-system,\'Segoe UI\',sans-serif;margin:0;display:flex;flex-direction:column;height:100vh}'
+   +'.hd{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.14);flex:none}'
+   +'#pos{font-family:\'JetBrains Mono\',Consolas,monospace;font-size:12px;letter-spacing:1px;color:#A855F7}'
+   +'#lab{flex:1;font-family:\'JetBrains Mono\',Consolas,monospace;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#9A9AA2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+   +'#clk{font-family:\'JetBrains Mono\',Consolas,monospace;font-size:12px;color:#CFCFD6;cursor:pointer;border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:3px 9px}'
+   +'#clk:hover{color:#F2F2F3;border-color:rgba(255,255,255,.28)}'
+   +'#body{flex:1;overflow-y:auto;padding:18px 22px 24px;font-size:15px;line-height:1.66;color:#CFCFD6;font-weight:300}'
+   +'#body h4{color:#F2F2F3;font-size:12px;font-family:\'JetBrains Mono\',Consolas,monospace;text-transform:uppercase;letter-spacing:1.4px;margin:16px 0 6px;font-weight:500}'
+   +'#body h4:first-child{margin-top:0}'
+   +'#body p{margin:0 0 9px}'
+   +'#body b{color:#F2F2F3;font-weight:600}'
+   +'.ft{display:flex;align-items:center;gap:12px;padding:10px 20px;border-top:1px solid rgba(255,255,255,.14);flex:none}'
+   +'.ft .k{font-family:\'JetBrains Mono\',Consolas,monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#A855F7}'
+   +'#nxt{font-size:13px;color:#CFCFD6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+   +'.ft .hint{margin-left:auto;font-family:\'JetBrains Mono\',Consolas,monospace;font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:#6b6b72;white-space:nowrap}'
+   +'::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#26262b;border-radius:5px}::-webkit-scrollbar-track{background:transparent}'
+   +'</style></head><body>'
+   +'<div class="hd"><span id="pos"></span><span id="lab"></span><span id="clk" title="Click to reset the timer">00:00</span></div>'
+   +'<div id="body"></div>'
+   +'<div class="ft"><span class="k">Next</span><span id="nxt"></span><span class="hint">&larr; &rarr; navigate from here too</span></div>'
+   +'</body></html>');
+  d.close();
+  if(!notesT0)notesT0=Date.now();
+  d.getElementById('clk').onclick=()=>{notesT0=Date.now();};
+  d.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home'){show(firstVisible());}
+    else if(e.key==='End'){show(lastVisible());}
+  });
+  clearInterval(notesTimerT);
+  notesTimerT=setInterval(()=>{
+    if(!notesWin||notesWin.closed){clearInterval(notesTimerT);return;}
+    const s=Math.floor((Date.now()-notesT0)/1000);
+    const el=notesWin.document.getElementById('clk');
+    if(el)el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },1000);
+  updateNotesWin();
+  toast('Presenter notes detached — keep this window on your side screen');
+}
+function toggleNotesWin(){
+  if(notesWin&&!notesWin.closed){notesWin.close();notesWin=null;toast('Presenter notes window closed');}
+  else openNotesWin();
+}
+function updateNotesWin(){
+  if(!notesWin||notesWin.closed)return;
+  const d=notesWin.document;
+  if(!d||!d.getElementById('body'))return;
+  const sl=slides[cur];
+  const nd=sl.querySelector('.notes-data');
+  const v=visList(),vp=v.indexOf(sl)+1;
+  d.getElementById('pos').textContent=vp>0?String(vp).padStart(2,'0')+' / '+String(v.length).padStart(2,'0'):'hidden';
+  d.getElementById('lab').textContent=sl.getAttribute('data-label')||sl.id;
+  d.getElementById('body').innerHTML=nd?nd.innerHTML:'<p>—</p>';
+  const i=v.indexOf(sl);
+  const nx=(i>=0&&i+1<v.length)?v[i+1]:null;
+  d.getElementById('nxt').textContent=nx?(nx.getAttribute('data-label')||nx.id):'— end of deck —';
+  d.getElementById('body').scrollTop=0;
+}
+window.addEventListener('beforeunload',()=>{if(notesWin&&!notesWin.closed)notesWin.close();});
+function show(i,force){
+  i=Math.max(0,Math.min(TOTAL-1,i));
+  if(!force && hidden.has(slides[i].id)){
+    const v=seq();const p=v.indexOf(slides[i]);
+    let f=p;while(f<v.length&&hidden.has(v[f].id))f++;
+    if(f>=v.length){let b=p;while(b>=0&&hidden.has(v[b].id))b--;if(b<0)return;f=b;}
+    i=slides.indexOf(v[f]);
+  }
+  slides[cur].classList.remove('active');
+  cur=i;
+  slides[cur].classList.add('active');
+  setCnt();renderNotes();
+  const id=slides[cur].id;
+  if(initOnce[id]&&!initOnce[id].done){initOnce[id].done=true;try{initOnce[id].fn();}catch(e){console.error(e);}}
+}
+function next(){const v=seq();let i=v.indexOf(slides[cur])+1;while(i<v.length&&hidden.has(v[i].id))i++;if(i<v.length)show(slides.indexOf(v[i]));}
+function prev(){const v=seq();let i=v.indexOf(slides[cur])-1;while(i>=0&&hidden.has(v[i].id))i--;if(i>=0)show(slides.indexOf(v[i]));}
+
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('on');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('on'),1800);
+}
+function hideCurrent(){
+  if(visList().length<=1){toast('Cannot hide last visible slide');return;}
+  const hSlide=slides[cur];
+  const id=hSlide.id,label=hSlide.getAttribute('data-label')||id;
+  hidden.add(id);saveHidden();
+  renumberFooters();
+  const v=seq();const p=v.indexOf(hSlide);
+  const tgt=(p+1<v.length)?v[p+1]:v[p-1];
+  show(slides.indexOf(tgt));
+  toast('Hidden: '+label);
+}
+function unhideAll(){
+  if(hidden.size===0){toast('No hidden slides');return;}
+  hidden.clear();saveHidden();
+  renumberFooters();setCnt();renderNotes();
+  if(document.getElementById('hpicker').classList.contains('on'))renderPicker();
+  toast('All slides restored');
+}
+function unhideOne(id){
+  hidden.delete(id);saveHidden();
+  renumberFooters();setCnt();renderNotes();
+  renderPicker();
+}
+function renderPicker(){
+  const list=document.getElementById('hlist');
+  list.innerHTML='';
+  if(hidden.size===0){
+    const li=document.createElement('li');li.className='empty';
+    li.textContent='No slides hidden.';
+    list.appendChild(li);return;
+  }
+  slides.filter(s=>hidden.has(s.id)).forEach(s=>{
+    const li=document.createElement('li');
+    const lab=s.getAttribute('data-label')||s.id;
+    const idSpan=document.createElement('span');idSpan.className='hl-id';idSpan.textContent=s.id;
+    const labSpan=document.createElement('span');labSpan.className='hl-lab';labSpan.textContent=lab;
+    const btn=document.createElement('button');btn.textContent='Restore';
+    btn.onclick=()=>unhideOne(s.id);
+    li.appendChild(idSpan);li.appendChild(labSpan);li.appendChild(btn);
+    list.appendChild(li);
+  });
+}
+function togglePicker(){
+  const el=document.getElementById('hpicker');
+  el.classList.toggle('on');
+  if(el.classList.contains('on'))renderPicker();
+}
+document.getElementById('bNext').onclick=next;
+document.getElementById('bPrev').onclick=prev;
+document.getElementById('bNotes').onclick=()=>document.getElementById('notes').classList.toggle('on');
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'){next();}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){prev();}
+  else if(e.key===' '){e.preventDefault();next();}
+  else if(e.key==='Home'){show(firstVisible());}
+  else if(e.key==='End'){show(lastVisible());}
+  else if(e.key==='n'||e.key==='N'){if(e.shiftKey){toggleNotesWin();}else{document.getElementById('notes').classList.toggle('on');}}
+  else if(e.key==='?'){document.getElementById('help').classList.toggle('on');}
+  else if(e.key==='o'||e.key==='O'){toggleOverview();}
+  else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  else if(e.key==='h'||e.key==='H'){
+    if(e.shiftKey){togglePicker();}
+    else if(document.getElementById('overview').classList.contains('on')){
+      if(ovHoverId)toggleHiddenAt(ovHoverId);
+      else toast('Hover over a slide, then press H');
+    }
+    else{hideCurrent();}
+  }
+  else if(e.key==='u'||e.key==='U'){unhideAll();}
+  else if((e.key==='r'||e.key==='R')&&document.getElementById('overview').classList.contains('on')){resetOrder();}
+  else if(e.key==='Escape'){
+    document.getElementById('help').classList.remove('on');
+    document.getElementById('notes').classList.remove('on');
+    document.getElementById('hpicker').classList.remove('on');
+    document.getElementById('overview').classList.remove('on');
+    ovHoverId=null;
+  }
+});
+function preInitDiagrams(){
+  for(const id in initOnce){
+    const r=initOnce[id];
+    if(!r.done){r.done=true;try{r.fn();}catch(e){console.error('preinit',id,e);}}
+  }
+}
+/* ---------- reorder engine ---------- */
+let dragId=null,justDragged=false;
+function clearDropMarks(){
+  document.querySelectorAll('#overview .ov-cell.drop-before,#overview .ov-cell.drop-after')
+    .forEach(function(x){x.classList.remove('drop-before','drop-after');});
+}
+function moveSlide(id,targetId,before){
+  if(id===targetId)return;
+  const from=order.indexOf(id);if(from<0)return;
+  order.splice(from,1);
+  let to=order.indexOf(targetId);
+  if(to<0){order.splice(from,0,id);return;}
+  if(!before)to+=1;
+  order.splice(to,0,id);
+  saveOrder();renumberFooters();setCnt();renderNotes();
+  if(document.getElementById('overview').classList.contains('on'))renderOverview();
+  toast('Slide order updated');
+}
+function resetOrder(){
+  if(!isCustomOrder()){toast('Already in original order');return;}
+  order=slides.map(function(s){return s.id;});
+  saveOrder();renumberFooters();setCnt();renderNotes();
+  if(document.getElementById('overview').classList.contains('on'))renderOverview();
+  toast('Original slide order restored');
+}
+function wireDnD(cell){
+  cell.draggable=true;
+  cell.addEventListener('dragstart',function(e){
+    dragId=cell.getAttribute('data-id');
+    cell.classList.add('dragging');
+    try{e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move';}catch(_){}
+  });
+  cell.addEventListener('dragend',function(){
+    cell.classList.remove('dragging');clearDropMarks();
+    justDragged=true;setTimeout(function(){justDragged=false;},120);
+    dragId=null;
+  });
+  cell.addEventListener('dragover',function(e){
+    if(!dragId)return;
+    e.preventDefault();
+    try{e.dataTransfer.dropEffect='move';}catch(_){}
+    const r=cell.getBoundingClientRect();
+    const before=(e.clientX-r.left)<r.width/2;
+    clearDropMarks();
+    if(cell.getAttribute('data-id')!==dragId)cell.classList.add(before?'drop-before':'drop-after');
+  });
+  cell.addEventListener('dragleave',function(){cell.classList.remove('drop-before','drop-after');});
+  cell.addEventListener('drop',function(e){
+    e.preventDefault();
+    const tid=cell.getAttribute('data-id');
+    const r=cell.getBoundingClientRect();
+    const before=(e.clientX-r.left)<r.width/2;
+    clearDropMarks();
+    if(dragId&&tid&&dragId!==tid)moveSlide(dragId,tid,before);
+    dragId=null;
+  });
+}
+
+let ovHoverId=null;
+function updateOvMeta(){
+  document.getElementById('ovMeta').innerHTML=
+    '<b>'+TOTAL+'</b> slides &nbsp;·&nbsp; <b>'+hidden.size+'</b> hidden &nbsp;·&nbsp; <b>'+visList().length+'</b> in deck'+
+    (isCustomOrder()?' &nbsp;·&nbsp; <b style="color:var(--v3)">custom order</b>':'');
+}
+function updateOvCell(id){
+  const cell=document.querySelector('#overview .ov-cell[data-id="'+id+'"]');
+  if(!cell)return;
+  const isHidden=hidden.has(id);
+  cell.classList.toggle('hidden-slide',isHidden);
+  const badge=cell.querySelector('.ov-badge');
+  if(isHidden&&!badge){const b=document.createElement('div');b.className='ov-badge';b.textContent='Hidden';cell.appendChild(b);}
+  else if(!isHidden&&badge){badge.remove();}
+}
+function toggleHiddenAt(id){
+  const s=byId[id];if(!s)return;
+  const label=s.getAttribute('data-label')||id;
+  if(hidden.has(id)){
+    hidden.delete(id);saveHidden();
+    toast('Restored: '+label);
+  }else{
+    if(visList().length<=1){toast('Cannot hide last visible slide');return;}
+    hidden.add(id);saveHidden();
+    toast('Hidden: '+label);
+  }
+  renumberFooters();setCnt();renderNotes();
+  if(document.getElementById('hpicker').classList.contains('on'))renderPicker();
+  updateOvCell(id);updateOvMeta();
+}
+function renderOverview(){
+  preInitDiagrams();
+  const grid=document.getElementById('ovGrid');
+  grid.innerHTML='';
+  updateOvMeta();
+  seq().forEach((s,oi)=>{
+    const i=slides.indexOf(s);
+    const isHidden=hidden.has(s.id);
+    const cell=document.createElement('div');
+    cell.className='ov-cell'+(isHidden?' hidden-slide':'')+(i===cur?' current':'');
+    cell.setAttribute('data-idx',i);
+    cell.setAttribute('data-id',s.id);
+    cell.title='Click to open · drag to reorder';
+    const thumb=document.createElement('div');thumb.className='ov-thumb';
+    const clone=s.cloneNode(true);
+    clone.id='';clone.classList.remove('active');
+    clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    thumb.appendChild(clone);
+    cell.appendChild(thumb);
+    if(i===cur){const b=document.createElement('div');b.className='ov-current';b.textContent='Current';cell.appendChild(b);}
+    if(isHidden){const b=document.createElement('div');b.className='ov-badge';b.textContent='Hidden';cell.appendChild(b);}
+    const foot=document.createElement('div');foot.className='ov-foot';
+    const num=document.createElement('span');num.className='ov-num';
+    num.textContent=String(oi+1).padStart(2,'0');
+    const lab=document.createElement('span');lab.className='ov-lab';
+    lab.textContent=s.getAttribute('data-label')||s.id;
+    foot.appendChild(num);foot.appendChild(lab);
+    cell.appendChild(foot);
+    cell.onclick=()=>{if(justDragged)return;toggleOverview(false);show(i,true);};
+    cell.addEventListener('mouseenter',()=>{ovHoverId=s.id;});
+    cell.addEventListener('mouseleave',()=>{if(ovHoverId===s.id)ovHoverId=null;});
+    wireDnD(cell);
+    grid.appendChild(cell);
+  });
+  requestAnimationFrame(()=>{
+    const cc=grid.querySelector('.ov-cell.current');
+    if(cc)cc.scrollIntoView({block:'center',behavior:'auto'});
+  });
+}
+function toggleOverview(force){
+  const el=document.getElementById('overview');
+  const willOpen=typeof force==='boolean'?force:!el.classList.contains('on');
+  if(willOpen){renderOverview();el.classList.add('on');}
+  else{el.classList.remove('on');ovHoverId=null;}
+}
+document.getElementById('ovClose').onclick=()=>toggleOverview(false);
+document.getElementById('ovReset').onclick=resetOrder;
+document.getElementById('overview').addEventListener('click',e=>{
+  if(e.target.id==='overview'||e.target.classList.contains('ov-body')||e.target.classList.contains('ov-grid')){
+    toggleOverview(false);
+  }
+});
+function mkTip(container){
+  const t=document.createElement('div');t.className='dg-tip';container.appendChild(t);
+  return{
+    show(html,x,y){t.innerHTML=html;t.classList.add('on');
+      const w=t.offsetWidth,h=t.offsetHeight;
+      let nx=x+16,ny=y-h-10;
+      if(nx+w>container.offsetWidth)nx=x-w-16;
+      if(ny<0)ny=y+18;
+      t.style.left=nx+'px';t.style.top=ny+'px';},
+    hide(){t.classList.remove('on');}
+  };
+}
+
+/* ============================================================
+   D3 DIAGRAMS
+   ============================================================ */
+const C={page:'#090909',s1:'#131316',s2:'#1b1b1f',s3:'#26262b',
+  line:'rgba(255,255,255,.13)',line2:'rgba(255,255,255,.24)',
+  tx:'#F2F2F3',dim:'#CFCFD6',faint:'#9A9AA2',
+  v1:'#48157C',v2:'#8427E2',v3:'#A855F7',teal:'#2DD4BF',blue:'#3B82F6',
+  hi:'#EF4444',md:'#F59E0B',lo:'#27B663'};
+const SANS="'Inter Tight',sans-serif",MONO="'JetBrains Mono',monospace";
+function dgReg(slideId,hostId,vbW,vbH,fn){
+  initOnce[slideId]={done:false,fn:function(){
+    const el=document.getElementById(hostId);
+    if(!el)return;
+    const hint=el.querySelector('.dg-hint');
+    el.innerHTML='';
+    if(hint)el.appendChild(hint);
+    const svg=d3.select(el).append('svg').attr('viewBox','0 0 '+vbW+' '+vbH);
+    const tip=mkTip(el);
+    const px=function(e){const r=el.getBoundingClientRect();
+      const scx=r.width/el.offsetWidth||1;
+      return[(e.clientX-r.left)/scx,(e.clientY-r.top)/scx];};
+    fn(svg,tip,px,vbW,vbH,el);
+  }};
+}
+function R(p,x,y,w,h,o){o=o||{};
+  return p.append('rect').attr('x',x).attr('y',y).attr('width',w).attr('height',h)
+   .attr('rx',o.r==null?9:o.r).attr('fill',o.fill||'none')
+   .attr('stroke',o.stroke||'none').attr('stroke-width',o.sw==null?1:o.sw);}
+function T(p,x,y,s,o){o=o||{};
+  const t=p.append('text').attr('x',x).attr('y',y).text(s)
+   .attr('font-family',o.mono?MONO:SANS).attr('font-size',o.fs||12)
+   .attr('fill',o.fill||C.tx).attr('font-weight',o.fw||400);
+  if(o.anchor)t.attr('text-anchor',o.anchor);
+  if(o.ls)t.attr('letter-spacing',o.ls);
+  return t;}
+
+/* ============================================================
+   05 · INDUSTRIAL CONTEXT GRAPH
+   Core at the centre, six process domains on an ellipse.
+   Hover a domain: its spoke and its two ring edges light up,
+   everything else dims. Hover the core: the whole model lights.
+   ============================================================ */
+dgReg('s05','dg-graph',1140,452,(svg,tip,px,vbW,vbH,el)=>{
+  const CX=570,CY=222,RX=386,RY=172;
+  const NW=176,NH=54;
+  const rad=d=>d*Math.PI/180;
+
+  const DOM=[
+    {id:'fs', a:-90,  n:'Field service',      c:C.teal,
+     ent:'Work orders · crews · skills · SLAs',
+     why:'A worker planning a job can already see who holds the certification and how much SLA clock is left.'},
+    {id:'al', a:-30,  n:'Asset lifecycle',    c:C.v3,
+     ent:'Assets · serials · maintenance plans · failure history',
+     why:'The same fault code on a critical asset and on a depot spare are two different decisions. The graph knows which is which.'},
+    {id:'fi', a:30,   n:'Finance',            c:C.blue,
+     ent:'Cost centres · invoices · accruals · revenue',
+     why:'Every action a worker takes lands against a cost centre, so the money follows the work without a reconciliation exercise.'},
+    {id:'oc', a:90,   n:'Order to cash',      c:C.lo,
+     ent:'Sales orders · contracts · entitlements · billing',
+     why:'Entitlement is checked before the van rolls, not after the invoice is disputed.'},
+    {id:'cx', a:150,  n:'Customer experience',c:C.md,
+     ent:'Cases · conversations · sentiment · knowledge',
+     why:'What the customer said at 6am is still attached to the job at 4pm, without anyone re-typing it.'},
+    {id:'pr', a:210,  n:'Procurement',        c:'#f472b6',
+     ent:'Purchase orders · suppliers · lead times · parts',
+     why:'A part with a fourteen-day lead time changes the schedule before the schedule is published.'}
+  ];
+  DOM.forEach(d=>{d.x=CX+RX*Math.cos(rad(d.a));d.y=CY+RY*Math.sin(rad(d.a));});
+  const IDX={};DOM.forEach((d,i)=>IDX[d.id]=i);
+
+  /* ring edges between neighbouring domains */
+  const RING=[];
+  for(let i=0;i<DOM.length;i++)RING.push([i,(i+1)%DOM.length]);
+
+  const gRing=svg.append('g'),gSpoke=svg.append('g'),gCore=svg.append('g'),gNode=svg.append('g');
+
+  /* ---- ring chords (curved toward the centre) ---- */
+  const ringEl=RING.map(([a,b])=>{
+    const A=DOM[a],B=DOM[b];
+    const mx=(A.x+B.x)/2,my=(A.y+B.y)/2;
+    const qx=mx+(CX-mx)*.30,qy=my+(CY-my)*.30;
+    return gRing.append('path')
+      .attr('d','M'+A.x+','+A.y+' Q'+qx+','+qy+' '+B.x+','+B.y)
+      .attr('fill','none').attr('stroke',C.line2).attr('stroke-width',1).attr('opacity',.5);
+  });
+
+  /* ---- spokes to the core ---- */
+  const spokeEl=DOM.map(d=>gSpoke.append('line')
+    .attr('x1',d.x).attr('y1',d.y).attr('x2',CX).attr('y2',CY)
+    .attr('stroke',d.c).attr('stroke-width',1.2)
+    .attr('stroke-dasharray','5,6').attr('opacity',.42));
+
+  /* ---- core ---- */
+  const coreG=gCore.append('g').attr('class','n-node');
+  coreG.append('circle').attr('cx',CX).attr('cy',CY).attr('r',96)
+    .attr('fill','none').attr('stroke',C.v2).attr('stroke-width',1).attr('opacity',.22);
+  coreG.append('circle').attr('cx',CX).attr('cy',CY).attr('r',74)
+    .attr('fill','none').attr('stroke',C.v2).attr('stroke-width',1).attr('opacity',.34);
+  R(coreG,CX-104,CY-33,208,66,{r:15,fill:'#150c22',stroke:'rgba(168,85,247,.55)',sw:1.4});
+  T(coreG,CX,CY-4,'IFS Loops',{fs:19,fw:600,anchor:'middle',fill:C.tx});
+  T(coreG,CX,CY+18,'INDUSTRIAL CONTEXT GRAPH',{fs:8.5,mono:true,anchor:'middle',fill:C.v3,ls:1.3});
+
+  /* ---- domain nodes ---- */
+  const nodeEl=DOM.map(d=>{
+    const g=gNode.append('g').attr('class','n-node').attr('opacity',.92);
+    R(g,d.x-NW/2,d.y-NH/2,NW,NH,{r:11,fill:C.s1,stroke:C.line,sw:1});
+    R(g,d.x-NW/2,d.y-NH/2,3.5,NH,{r:2,fill:d.c});
+    T(g,d.x,d.y-3,d.n,{fs:13.5,fw:600,anchor:'middle',fill:C.tx});
+    T(g,d.x,d.y+15,'DOMAIN',{fs:8,mono:true,anchor:'middle',fill:d.c,ls:1.4});
+    return g;
+  });
+
+  function dimAll(v){
+    nodeEl.forEach(g=>g.attr('opacity',v));
+    ringEl.forEach(p=>p.attr('opacity',v*.4).attr('stroke',C.line2).attr('stroke-width',1));
+    spokeEl.forEach((l,i)=>l.attr('opacity',v*.4).attr('stroke',DOM[i].c).attr('stroke-width',1.2));
+    coreG.attr('opacity',v<1?.5:1);
+  }
+  function reset(){
+    nodeEl.forEach(g=>g.attr('opacity',.92));
+    ringEl.forEach(p=>p.attr('opacity',.5).attr('stroke',C.line2).attr('stroke-width',1));
+    spokeEl.forEach((l,i)=>l.attr('opacity',.42).attr('stroke',DOM[i].c).attr('stroke-width',1.2));
+    coreG.attr('opacity',1);
+  }
+
+  DOM.forEach((d,i)=>{
+    const g=nodeEl[i];
+    g.on('mouseenter',e=>{
+      dimAll(.2);
+      g.attr('opacity',1);
+      spokeEl[i].attr('opacity',1).attr('stroke-width',2.2);
+      RING.forEach(([a,b],ri)=>{
+        if(a===i||b===i){
+          ringEl[ri].attr('opacity',.95).attr('stroke',d.c).attr('stroke-width',2);
+          nodeEl[a===i?b:a].attr('opacity',.72);
+        }
+      });
+      coreG.attr('opacity',1);
+      const[x,y]=px(e);
+      tip.show('<div class="tk">Domain</div><div class="tt">'+d.n+'</div>'
+        +'<div class="td" style="color:'+d.c+';margin-bottom:5px">'+d.ent+'</div>'
+        +'<div class="td">'+d.why+'</div>',x,y);
+    });
+    g.on('mouseleave',()=>{reset();tip.hide();});
+  });
+
+  coreG.on('mouseenter',e=>{
+    reset();
+    ringEl.forEach(p=>p.attr('opacity',.9).attr('stroke',C.v3).attr('stroke-width',1.6));
+    spokeEl.forEach(l=>l.attr('opacity',.95).attr('stroke-width',2));
+    const[x,y]=px(e);
+    tip.show('<div class="tk">One model, not six systems</div>'
+      +'<div class="tt">The industrial context graph</div>'
+      +'<div class="td">Context created by one worker is instantly available to every other, and every decision traces back to the records that drove it. Take this layer away and what is left is a chatbot with an ERP login.</div>',x,y);
+  });
+  coreG.on('mouseleave',()=>{reset();tip.hide();});
+});
+
+/* ============================================================
+   07 · AGENTIC FSM — ONE JOB, END TO END
+   Three lanes, six stages, nine workers. Hover a worker to
+   highlight its handovers and surface what it owns.
+   ============================================================ */
+dgReg('s07','dg-flow',1140,452,(svg,tip,px,vbW,vbH,el)=>{
+  const LANE={cx:{y:96, c:C.teal,n:'Customer experience'},
+              fs:{y:234,c:C.v3, n:'Field service'},
+              sc:{y:372,c:C.lo, n:'Procurement'}};
+  const STAGE=['Contact','Triage','Plan','Parts','Dispatch','Close'];
+  const SX=i=>102+i*187;
+  const NW=164,NH=56;
+
+  const N=[
+   {s:0,l:'cx',t:['Auto Pilot'],r:'Conversation agent',
+    d:'Takes the inbound contact on any channel, works out what is actually wrong, and resolves it outright where it can.'},
+   {s:1,l:'cx',t:['AI Agent','Assist'],r:'Service desk co-pilot',
+    d:'Sits alongside the human agent. Pulls history, entitlement and the likely fix while the customer is still on the line.'},
+   {s:1,l:'fs',t:['Intelligent','Routing'],r:'Work routing',
+    d:'Decides remote, field, or neither, and puts the job in the right queue with all the context already attached.'},
+   {s:2,l:'fs',t:['Service Planning','Assistant'],r:'Work order enrichment',
+    d:'Fills the job out properly before it reaches the schedule. Scope, skills needed, parts needed, realistic duration.'},
+   {s:3,l:'sc',t:['Inventory','Replenisher'],r:'Parts demand',
+    d:'Sees the parts this job will consume, checks stock, and raises the requisition. Nobody had to ask for it.'},
+   {s:4,l:'sc',t:['Supplier Order','Manager'],r:'Supplier orders',
+    d:'Turns that requisition into a purchase order and chases the supplier for a firm date until it has one.'},
+   {s:4,l:'fs',t:['Dispatch','Assistant'],r:'Live schedule',
+    d:'Holds the schedule together as the day moves. Overruns, no-shows, traffic, and the SLA clock that does not stop.'},
+   {s:5,l:'fs',t:['Service Closure','Manager'],r:'Job closure',
+    d:'Closes the job with parts, labour and sign-off attached, so billing goes out the same day instead of the same week.'},
+   {s:5,l:'cx',t:['Auto QA'],r:'Quality review',
+    d:'Reviews every job rather than a sample, and flags the ones that are going to come back before the customer notices.'}
+  ];
+  N.forEach(n=>{n.x=SX(n.s);n.y=LANE[n.l].y;n.c=LANE[n.l].c;});
+
+  const E=[[0,2],[2,1],[2,3],[3,4],[4,5],[3,6],[5,6],[6,7],[7,8]];
+
+  const defs=svg.append('defs');
+  ['teal','v3','lo'].forEach(k=>{
+    defs.append('marker').attr('id','ar-'+k).attr('viewBox','0 0 10 10')
+      .attr('refX',9).attr('refY',5).attr('markerWidth',5).attr('markerHeight',5)
+      .attr('orient','auto-start-reverse')
+      .append('path').attr('d','M0,1 L9,5 L0,9 z').attr('fill',C[k]).attr('opacity',.85);
+  });
+  const MK={};MK[C.teal]='ar-teal';MK[C.v3]='ar-v3';MK[C.lo]='ar-lo';
+
+  /* ---- lane bands ---- */
+  const gBand=svg.append('g');
+  Object.keys(LANE).forEach(k=>{
+    const L=LANE[k];
+    R(gBand,4,L.y-58,vbW-8,116,{r:13,fill:'rgba(255,255,255,.018)',stroke:C.line,sw:1});
+    T(gBand,16,L.y-42,L.n.toUpperCase(),{fs:8.5,mono:true,fill:L.c,ls:1.6});
+  });
+
+  /* ---- stage captions ---- */
+  STAGE.forEach((s,i)=>T(svg,SX(i),24,s.toUpperCase(),{fs:8.5,mono:true,anchor:'middle',fill:C.faint,ls:1.6}));
+
+  /* ---- edges ---- */
+  const gEdge=svg.append('g');
+  const edgeEl=E.map(([a,b])=>{
+    const A=N[a],B=N[b];let d;
+    if(A.s===B.s){
+      const up=B.y<A.y;
+      const y1=up?A.y-NH/2:A.y+NH/2, y2=up?B.y+NH/2:B.y-NH/2;
+      d='M'+A.x+','+y1+' L'+B.x+','+y2;
+    }else{
+      const x1=A.x+NW/2,x2=B.x-NW/2;
+      d='M'+x1+','+A.y+' C'+(x1+52)+','+A.y+' '+(x2-52)+','+B.y+' '+x2+','+B.y;
+    }
+    return gEdge.append('path').attr('d',d).attr('fill','none')
+      .attr('stroke',A.c).attr('stroke-width',1.3).attr('opacity',.4)
+      .attr('stroke-dasharray','5,5').attr('marker-end','url(#'+MK[A.c]+')');
+  });
+
+  /* ---- nodes ---- */
+  const gNode=svg.append('g');
+  const nodeEl=N.map((n,i)=>{
+    const g=gNode.append('g').attr('class','n-node').attr('opacity',.92);
+    R(g,n.x-NW/2,n.y-NH/2,NW,NH,{r:11,fill:C.s1,stroke:C.line,sw:1});
+    R(g,n.x-NW/2,n.y-NH/2,3.5,NH,{r:2,fill:n.c});
+    if(n.t.length===1){
+      T(g,n.x,n.y-1,n.t[0],{fs:13,fw:600,anchor:'middle',fill:C.tx});
+    }else{
+      T(g,n.x,n.y-7,n.t[0],{fs:12.5,fw:600,anchor:'middle',fill:C.tx});
+      T(g,n.x,n.y+8,n.t[1],{fs:12.5,fw:600,anchor:'middle',fill:C.tx});
+    }
+    T(g,n.x,n.y+21,String(i+1).padStart(2,'0'),{fs:8,mono:true,anchor:'middle',fill:n.c,ls:1.2});
+    return g;
+  });
+
+  function reset(){
+    nodeEl.forEach(g=>g.attr('opacity',.92));
+    edgeEl.forEach((p,i)=>p.attr('opacity',.4).attr('stroke-width',1.3).attr('stroke',N[E[i][0]].c));
+  }
+  N.forEach((n,i)=>{
+    const g=nodeEl[i];
+    g.on('mouseenter',e=>{
+      nodeEl.forEach(x=>x.attr('opacity',.24));
+      edgeEl.forEach(p=>p.attr('opacity',.12));
+      g.attr('opacity',1);
+      E.forEach(([a,b],ei)=>{
+        if(a===i||b===i){
+          edgeEl[ei].attr('opacity',1).attr('stroke-width',2.4).attr('stroke',n.c);
+          nodeEl[a===i?b:a].attr('opacity',.7);
+        }
+      });
+      const[x,y]=px(e);
+      tip.show('<div class="tk">'+String(i+1).padStart(2,'0')+' · '+n.r+'</div>'
+        +'<div class="tt">'+n.t.join(' ')+'</div><div class="td">'+n.d+'</div>',x,y);
+    });
+    g.on('mouseleave',()=>{reset();tip.hide();});
+  });
+});
+
+/* ---- DIAGRAMS_INSERT ---- */
+
+/* ---------- content wrap: vertical centring ---------- */
+slides.forEach(function(s){
+  var w=document.createElement('div');w.className='cwrap';
+  var move=[].filter.call(s.children,function(ch){
+    return !(ch.classList.contains('aurora')||ch.classList.contains('logo')||ch.classList.contains('foot')||ch.classList.contains('notes-data'));
+  });
+  move.forEach(function(ch){w.appendChild(ch);});
+  var anchor=s.querySelector('.logo');
+  s.insertBefore(w,anchor||null);
+});
+
+/* ---------- boot ---------- */
+(function bootHidden(){
+  if(visList().length===0){hidden.clear();saveHidden();}
+  let target=slides.findIndex(s=>s.classList.contains('active'));
+  if(target<0)target=0;
+  if(isCustomOrder()){const v=visList();if(v.length)target=slides.indexOf(v[0]);}
+  slides.forEach(s=>s.classList.remove('active'));
+  renumberFooters();
+  show(target);
+})();
+</script>
+</body>
+</html>
